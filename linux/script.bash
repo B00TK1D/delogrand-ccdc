@@ -24,10 +24,6 @@ sudo truncate -s 0 /etc/securetty
 sudo passwd -l root
 sudo passwd -l guest
 
-#Prevent IP Spoofing
-sudo echo "order bind, hosts" | sudo tee -a /etc/host.conf
-sudo echo "nospoof on" | sudo tee -a /etc/host.conf
-
 
 #Configure /etc/login.defs
 sudo cp /etc/login.defs /etc/login.old
