@@ -2473,3 +2473,4 @@ reg add "HKEY_USERS\.DEFAULT\SOFTWARE\JavaSoft\Java Update\Policy\jucheck" /v No
 
 
 
+pause

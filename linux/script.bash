@@ -525,6 +525,11 @@ echo "_apt" >> safe-users.tmp
 echo "libuuid" >> safe-users.tmp
 echo "postdrop" >> safe-users.tmp
 echo "uuid" >> safe-users.tmp
+echo "tss" >> safe-users.tmp
+echo "tcpdump" >> safe-users.tmp
+echo "systemd-coredump" >> safe-users.tmp
+echo "pollinate" >> safe-users.tmp
+echo "nm-openvpn" >> safe-users.tmp
 
 
 
@@ -573,7 +578,7 @@ for usr in `sudo cut -d: -f 1 /etc/passwd | sort -r`; do
           sudo passwd -u $usr
           sudo echo -e "$password\n$password" | (passwd $usr) > /dev/null 2>&1
           sudo chage -E -1 -m 5 -M 60 -I 10 -W 14 $usr > /dev/null 2>&1
-          sudo crontab -u $usr -l >> cronjobs.log
+          sudo crontab -u $usr -l >> cronjobs.log 2>&1
           #Secures home directory so only the user may access and use their files.
           sudo su $usr chmod 700 /home/$usr > /dev/null 2>&1
           #sudo chmod 0 $usr:$usr 700 /home/$usr > /dev/null 2>&1
@@ -590,7 +595,7 @@ for usr in `sudo cut -d: -f 1 /etc/passwd | sort -r`; do
         fi
       else
         sudo echo -e "$password\n$password" | (passwd $usr)
-        sudo crontab -u $usr -l >> cronjobs.log
+        sudo crontab -u $usr -l >> cronjobs.log 2>/dev/null
         sudo echo "$usr    ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers.tmp
         sudo adduser $usr sudo > /dev/null 2>&1
         sudo gpasswd -a $usr sudo > /dev/null 2>&1
@@ -602,7 +607,7 @@ for usr in `sudo cut -d: -f 1 /etc/passwd | sort -r`; do
         echo "$usr" >> safe-groups-users.tmp
       fi
     else
-      sudo crontab -u $usr -l >> cronjobs.log
+      sudo crontab -u $usr -l >> cronjobs.log2>/dev/null
       echo "$usr:x:$uid:$gid:$name:$homedir:$usrshell" | sudo tee -a /etc/passwd.tmp
     fi
   fi
