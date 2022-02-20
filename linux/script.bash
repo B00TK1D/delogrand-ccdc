@@ -461,6 +461,73 @@ sudo software-properties-gtk
 
 
 
+#Misc sudo dconf settings
+sudo dconf write /desktop/gnome/crypto/pgp/ascii-armor true
+sudo dconf write /desktop/gnome/crypto/pgp/encrypt-to-self true
+
+
+#Prepare Cronjob log file for later
+sudo echo "Cronjobs for all users:" > cronjobs.log
+
+
+#Begin sudoer file configuration
+sudo echo "Defaults        env_reset" | sudo tee /etc/sudoers.tmp
+sudo echo "Defaults        mail_badpass" | sudo tee -a /etc/sudoers
+sudo echo "Defaults        secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"" | sudo tee -a /etc/sudoers.tmp
+sudo echo "root    ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers.tmp
+sudo echo "%sudo    ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers.tmp
+sudo echo "%admin    ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers.tmp
+
+
+#Default Users
+>safe-users.tmp
+echo "www-data" >> safe-users.tmp
+echo "whoopsie" >> safe-users.tmp
+echo "uuidd" >> safe-users.tmp
+echo "uucp" >> safe-users.tmp
+echo "usbmux" >> safe-users.tmp
+echo "systemd-timesync" >> safe-users.tmp
+echo "systemd-resolve" >> safe-users.tmp
+echo "systemd-network" >> safe-users.tmp
+echo "systemd-bus-proxy" >> safe-users.tmp
+echo "syslog" >> safe-users.tmp
+echo "sys" >> safe-users.tmp
+echo "sync" >> safe-users.tmp
+echo "speech-dispatcher" >> safe-users.tmp
+echo "saned" >> safe-users.tmp
+echo "rtkit" >> safe-users.tmp
+echo "root" >> safe-users.tmp
+echo "pulse" >> safe-users.tmp
+echo "proxy" >> safe-users.tmp
+echo "postfix" >> safe-users.tmp
+echo "nobody" >> safe-users.tmp
+echo "news" >> safe-users.tmp
+echo "messagebus" >> safe-users.tmp
+echo "man" >> safe-users.tmp
+echo "mail" >> safe-users.tmp
+echo "lp" >> safe-users.tmp
+echo "list" >> safe-users.tmp
+echo "lightdm" >> safe-users.tmp
+echo "kernoops" >> safe-users.tmp
+echo "irc" >> safe-users.tmp
+echo "hplip" >> safe-users.tmp
+echo "gnats" >> safe-users.tmp
+echo "games" >> safe-users.tmp
+echo "dnsmasq" >> safe-users.tmp
+echo "daemon" >> safe-users.tmp
+echo "colord" >> safe-users.tmp
+echo "clamav" >> safe-users.tmp
+echo "bin" >> safe-users.tmp
+echo "backup" >> safe-users.tmp
+echo "avahi-autoipd" >> safe-users.tmp
+echo "avahi" >> safe-users.tmp
+echo "_apt" >> safe-users.tmp
+echo "libuuid" >> safe-users.tmp
+echo "postdrop" >> safe-users.tmp
+echo "uuid" >> safe-users.tmp
+
+
+
 
 
 
