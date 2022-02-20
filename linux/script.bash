@@ -530,7 +530,12 @@ echo "tcpdump" >> safe-users.tmp
 echo "systemd-coredump" >> safe-users.tmp
 echo "pollinate" >> safe-users.tmp
 echo "nm-openvpn" >> safe-users.tmp
-
+echo "lxd" >> safe-users.tmp
+echo "landscape" >> safe-users.tmp
+echo "gnome-initial-setup" >> safe-users.tmp
+echo "geoclue" >> safe-users.tmp
+echo "gdm" >> safe-users.tmp
+echo "cops-pk-helper" >> safe-users.tmp
 
 
 
@@ -711,6 +716,8 @@ echo "dradis" >> safe-groups.tmp
 echo "xrdp" >> safe-groups.tmp
 echo "rdma" >> safe-groups.tmp
 echo "gluster" >> safe-groups.tmp
+echo "kvm" >> safe-groups.tmp
+echo "render" >> safe-groups.tmp
 #echo "sudo" >> safe-groups.tmp
 
 
@@ -829,7 +836,6 @@ sudo dconf write /desktop/gnome/remote_access/prompt-enabled true
 sudo dconf write /desktop/gnome/remote_access/lock-screen-on-disconnect true
 sudo dconf write /desktop/gnome/remote_access/notify-on-connect true
 sudo dconf write /desktop/gnome/remote_access/require-encryption true
-sudo dconf write /desktop/gnome/remote_access/authentication-methods vnc
 sudo dconf write /desktop/gnome/remote_access/use-upnp false
 
 #SSH Block
@@ -887,9 +893,8 @@ echo "AcceptEnv LANG LC_*" | sudo tee -a /etc/ssh/sshd_conf.tmp
 echo "Subsystem sftp internal-sftp" | sudo tee -a /etc/ssh/sshd_conf.tmp
 echo "start on filesystem or runlevel [2345]" | sudo tee -a /etc/ssh/sshd_conf.tmp
 
-sudo cp /etc/ssh/sshd_conf /etc/ssh/sshd_conf.old
-sudo mv -f /etc/ssh/sshd_conf.tmp /etc/ssh/sshd_conf
-
 if [ "$ssh_allowed" == "y" ]; then
+  sudo cp /etc/ssh/sshd_conf /etc/ssh/sshd_conf.old
+  sudo mv -f /etc/ssh/sshd_conf.tmp /etc/ssh/sshd_conf
   sudo service ssh restart
 fi
