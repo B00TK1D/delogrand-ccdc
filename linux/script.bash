@@ -347,54 +347,54 @@ sudo chmod 400 /etc/cron.allow /etc/at.allow
 
 #Telnet
 sudo service telnet stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/telnet.override
+sudo echo manual | sudo tee /etc/init/telnet.override &> /dev/null
 #rLogin
 sudo service rlogin stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/rlogin.override
+sudo echo manual | sudo tee /etc/init/rlogin.override &> /dev/null
 #rExec
 sudo service rexec stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/rexec.override
+sudo echo manual | sudo tee /etc/init/rexec.override &> /dev/null
 sudo service rexec stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/rexec.override
+sudo echo manual | sudo tee /etc/init/rexec.override &> /dev/null
 #Automount
 sudo service automount stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/automount.override
+sudo echo manual | sudo tee /etc/init/automount.override &> /dev/null
 #Name Server
 sudo service named stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/named.override
+sudo echo manual | sudo tee /etc/init/named.override &> /dev/null
 #rSH (remote shell)
 sudo service rsh stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/rsh.override
+sudo echo manual | sudo tee /etc/init/rsh.override &> /dev/null
 #finger
 sudo service finger stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/finger.override
+sudo echo manual | sudo tee /etc/init/finger.override &> /dev/null
 #netdump
 sudo service netdump stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/netdump.override
+sudo echo manual | sudo tee /etc/init/netdump.override &> /dev/null
 #nfs
 sudo service nfs stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/nfs.override
+sudo echo manual | sudo tee /etc/init/nfs.override &> /dev/null
 sudo service nfs-kernel-server stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/nfs-kernel-server.override
+sudo echo manual | sudo tee /etc/init/nfs-kernel-server.override &> /dev/null
 sudo apt-get purge -y nfs-kernel-server nfs-common portmap &> /dev/null
 #rwhod
 sudo service rwhod stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/rwhod.override
+sudo echo manual | sudo tee /etc/init/rwhod.override &> /dev/null
 #yppasswdd
 sudo service yppasswdd stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/yppasswdd.override
+sudo echo manual | sudo tee /etc/init/yppasswdd.override &> /dev/null
 #ypserv
 sudo service ypserv stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/ypserv.override
+sudo echo manual | sudo tee /etc/init/ypserv.override &> /dev/null
 #ypxfrd
 sudo service ypxfrd stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/ypxfrd.override
+sudo echo manual | sudo tee /etc/init/ypxfrd.override &> /dev/null
 #rsh
 sudo service rsh stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/rsh.override
+sudo echo manual | sudo tee /etc/init/rsh.override &> /dev/null
 #portmap
 sudo service portmap stop &> /dev/null
-sudo echo manual | sudo tee /etc/init/portmap.override
+sudo echo manual | sudo tee /etc/init/portmap.override &> /dev/null
 
 
 #Change login banner
@@ -581,7 +581,7 @@ for usr in `sudo cut -d: -f 1 /etc/passwd | sort -r`; do
           fi
           echo "Assigning $usr secure password."
           sudo passwd -u $usr
-          sudo echo -e "$password\n$password" | (passwd $usr) > /dev/null 2>&1
+          sudo echo -e "$password\n$password" | (sudo passwd $usr) > /dev/null 2>&1
           sudo chage -E -1 -m 5 -M 60 -I 10 -W 14 $usr > /dev/null 2>&1
           sudo crontab -u $usr -l >> cronjobs.log 2>&1
           #Secures home directory so only the user may access and use their files.
@@ -718,6 +718,14 @@ echo "rdma" >> safe-groups.tmp
 echo "gluster" >> safe-groups.tmp
 echo "kvm" >> safe-groups.tmp
 echo "render" >> safe-groups.tmp
+echo "tss" >> safe-groups.tmp
+echo "tcpdump" >> safe-groups.tmp
+echo "landscape" >> safe-groups.tmp
+echo "lxd" >> safe-groups.tmp
+echo "systemd-coredump" >> safe-groups.tmp
+echo "nm-openvpn" >> safe-groups.tmp
+echo "geoclue" >> safe-groups.tmp
+echo "gdm" >> safe-groups.tmp
 #echo "sudo" >> safe-groups.tmp
 
 
