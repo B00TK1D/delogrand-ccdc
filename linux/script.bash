@@ -325,11 +325,6 @@ sudo echo "auth optional pam_gnome_keyring.so" | sudo tee -a /etc/pam.d/unity.tm
 sudo mv -f /etc/pam.d/unity.tmp /etc/pam.d/unity
 
 
-#Secure Shared Memory
-sudo sed -i -e 's/none     /run/shm     tmpfs.*/none     /run/shm     tmpfs     defaults,ro     0     0/g' /etc/fstab
-sudo mount -o remount /dev/shm
-
-
 #Secure critical file permissions
 sudo chown root:root /etc/fstab
 sudo chown root:root /etc/passwd
@@ -462,3 +457,367 @@ hostname=`hostname`
 sudo rm -f /etc/sources.list
 echo "Opening update configuration manager, please just click 'Close' and then 'Reload'"
 sudo software-properties-gtk
+
+
+
+
+
+
+
+>/etc/passwd.tmp
+sudo cp /etc/passwd /etc/passwd.old
+
+clear
+echo "Press enter to begin editing user accounts..."
+read continue
+for usr in `sudo cut -d: -f 1 /etc/passwd | sort -r`; do
+  if [ "$usr" != "" ]; then
+    safe="false"
+    for entry in `cat safe-users.tmp`; do
+      if [ "$usr" == "$entry" ]; then
+        safe="true"
+        break
+      fi
+    done
+    uid=`sudo cat /etc/passwd | grep ^$usr: | cut -d ':' -f 3`
+    gid=`sudo cat /etc/passwd | grep ^$usr: | cut -d ':' -f 4`
+    name=`sudo cat /etc/passwd | grep ^$usr: | cut -d ':' -f 5`
+    homedir=`sudo cat /etc/passwd | grep ^$usr: | cut -d ':' -f 6`
+    usrshell=`sudo cat /etc/passwd | grep ^$usr: | cut -d ':' -f 7`
+    if [ "$safe" == "false" ]; then
+      sudo echo "Is $usr a valid user account? (Or skip) (y/n/s): "
+      read valid
+      if [ "$valid" != "s" ]; then
+        if [ "$valid" != "n" ]; then
+          sudo echo "Is $usr an administrator? (y/n): "
+          read admin
+          if [ "$admin" == "y" ]; then
+            echo "Giving $usr sudoer priviliges."
+            sudo adduser $usr sudo > /dev/null 2>&1
+            sudo gpasswd -a $usr sudo > /dev/null 2>&1
+            sudo echo "$usr    ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers.tmp
+          else
+            sudo deluser $usr sudo > /dev/null 2>&1
+            sudo echo $usr >> /etc/cron.deny
+            sudo gpasswd -d $usr sudo > /dev/null 2>&1
+            sudo echo "$usr    NONE=(NONE:NONE) NONE" | sudo tee -a /etc/sudoers.tmp
+          fi
+          echo "Assigning $usr secure password."
+          sudo passwd -u $usr
+          sudo echo -e "$password\n$password" | (passwd $usr) > /dev/null 2>&1
+          sudo chage -E -1 -m 5 -M 60 -I 10 -W 14 $usr > /dev/null 2>&1
+          sudo crontab -u $usr -l >> cronjobs.log
+          #Secures home directory so only the user may access and use their files.
+          sudo su $usr chmod 700 /home/$usr > /dev/null 2>&1
+          #sudo chmod 0 $usr:$usr 700 /home/$usr > /dev/null 2>&1
+          homedir="/home/$usr"
+          usrshell="/bin/bash"
+          echo "$usr:x:$uid:$gid:$name:$homedir:$usrshell" | sudo tee -a /etc/passwd.tmp
+          
+          echo "$usr" >> safe-groups-users.tmp
+        else
+          echo "Deleting user and user's files."
+          sudo passwd -l $usr > /dev/null 2>&1
+          sudo cronjob -u $usr -r > /dev/null 2>&1
+          sudo deluser --remove-home $usr > /dev/null 2>&1
+        fi
+      else
+        sudo echo -e "$password\n$password" | (passwd $usr)
+        sudo crontab -u $usr -l >> cronjobs.log
+        sudo echo "$usr    ALL=(ALL:ALL) ALL" | sudo tee -a /etc/sudoers.tmp
+        sudo adduser $usr sudo > /dev/null 2>&1
+        sudo gpasswd -a $usr sudo > /dev/null 2>&1
+        
+        homedir="/home/$usr"
+        usrshell="/bin/bash"
+        echo "$usr:x:$uid:$gid:$name:$homedir:$usrshell" | sudo tee -a /etc/passwd.tmp
+        
+        echo "$usr" >> safe-groups-users.tmp
+      fi
+    else
+      sudo crontab -u $usr -l >> cronjobs.log
+      echo "$usr:x:$uid:$gid:$name:$homedir:$usrshell" | sudo tee -a /etc/passwd.tmp
+    fi
+  fi
+done
+
+#Change root shell
+sudo sed -ie 's/root:x:0:0:root:\/root:.*/root:x:0:0:root:\/root:\/usr\/sbin\/nologin/g' /etc/passwd.tmp
+
+#Finish up config files
+sudo echo "#includedir /etc/sudoers.d" | sudo tee -a /etc/sudoers.tmp
+sudo mv -f /etc/sudoers.tmp /etc/sudoers
+sudo mv -f /etc/passwd.tmp /etc/passwd
+echo "User configuration complete."
+
+
+#Configure Groups
+echo "root" > safe-groups.tmp
+echo "www-data" >> safe-groups.tmp
+echo "whoopsie" >> safe-groups.tmp
+echo "voice" >> safe-groups.tmp
+echo "video" >> safe-groups.tmp
+echo "uuidd" >> safe-groups.tmp
+echo "uucp" >> safe-groups.tmp
+echo "utmp" >> safe-groups.tmp
+echo "users" >> safe-groups.tmp
+echo "tty" >> safe-groups.tmp
+echo "tape" >> safe-groups.tmp
+echo "systemd-timesync" >> safe-groups.tmp
+echo "systemd-resolve" >> safe-groups.tmp
+echo "systemd-network" >> safe-groups.tmp
+echo "systemd-journal" >> safe-groups.tmp
+echo "systemd-bus-proxy" >> safe-groups.tmp
+echo "syslog" >> safe-groups.tmp
+echo "sys" >> safe-groups.tmp
+echo "sudo" >> safe-groups.tmp
+echo "staff" >> safe-groups.tmp
+echo "ssl-cert" >> safe-groups.tmp
+echo "ssh" >> safe-groups.tmp
+echo "src" >> safe-groups.tmp
+echo "shadow" >> safe-groups.tmp
+echo "scanner" >> safe-groups.tmp
+echo "sasl" >> safe-groups.tmp
+echo "saned" >> safe-groups.tmp
+echo "sambashare" >> safe-groups.tmp
+echo "rtkit" >> safe-groups.tmp
+echo "pulse-access" >> safe-groups.tmp
+echo "pulse" >> safe-groups.tmp
+echo "proxy" >> safe-groups.tmp
+echo "postfix" >> safe-groups.tmp
+echo "postdrop" >> safe-groups.tmp
+echo "plugdev" >> safe-groups.tmp
+echo "operator" >> safe-groups.tmp
+echo "nopasswdlogin" >> safe-groups.tmp
+echo "nogroup" >> safe-groups.tmp
+echo "news" >> safe-groups.tmp
+echo "netdev" >> safe-groups.tmp
+echo "mlocate" >> safe-groups.tmp
+echo "messagebus" >> safe-groups.tmp
+echo "man" >> safe-groups.tmp
+echo "mail" >> safe-groups.tmp
+echo "lpadmin" >> safe-groups.tmp
+echo "lp" >> safe-groups.tmp
+echo "list" >> safe-groups.tmp
+echo "lightdm" >> safe-groups.tmp
+echo "kmem" >> safe-groups.tmp
+echo "irc" >> safe-groups.tmp
+echo "input" >> safe-groups.tmp
+echo "gnats" >> safe-groups.tmp
+echo "games" >> safe-groups.tmp
+echo "floppy" >> safe-groups.tmp
+echo "fax" >> safe-groups.tmp
+echo "disk" >> safe-groups.tmp
+echo "dip" >> safe-groups.tmp
+echo "dialout" >> safe-groups.tmp
+echo "daemon" >> safe-groups.tmp
+echo "crontab" >> safe-groups.tmp
+echo "colord" >> safe-groups.tmp
+echo "clamav" >> safe-groups.tmp
+echo "cdrom" >> safe-groups.tmp
+echo "bluetooth" >> safe-groups.tmp
+echo "bin" >> safe-groups.tmp
+echo "backup" >> safe-groups.tmp
+echo "avahi-autoipd" >> safe-groups.tmp
+echo "avahi" >> safe-groups.tmp
+echo "audio" >> safe-groups.tmp
+echo "adm" >> safe-groups.tmp
+echo "libuuid" >> safe-groups.tmp
+echo "fuse" >> safe-groups.tmp
+echo "utempter" >> safe-groups.tmp
+echo "epmd" >> safe-groups.tmp
+echo "redsocks" >> safe-groups.tmp
+echo "i2c" >> safe-groups.tmp
+echo "ntp" >> safe-groups.tmp
+echo "stunnel4" >> safe-groups.tmp
+echo "sslh" >> safe-groups.tmp
+echo "arpwatch" >> safe-groups.tmp
+echo "kismet" >> safe-groups.tmp
+echo "inetsim" >> safe-groups.tmp
+echo "kpadmins" >> safe-groups.tmp
+echo "dradis" >> safe-groups.tmp
+echo "xrdp" >> safe-groups.tmp
+echo "rdma" >> safe-groups.tmp
+echo "gluster" >> safe-groups.tmp
+#echo "sudo" >> safe-groups.tmp
+
+
+
+>/etc/group.tmp
+sudo cp /etc/passwd /etc/group.old
+
+echo "Press enter to begin editing groups..."
+read continue
+for line in `cat /etc/group`; do
+  group=`echo $line | cut -d ':' -f 1`
+  gid=`echo $line | cut -d ':' -f 3`
+  currentMembers=`echo $line | cut -d ':' -f 4`
+  if [ "$group" != "" ]; then
+    safe=false
+    check=false
+    usergroup=false
+    validGroup=y
+    validMember=y
+    members=""
+    for entry in `cat safe-groups.tmp`; do
+      if [ "$group" == "$entry" ]; then
+        safe=true
+        break
+      fi
+    done
+    for entry in `cat safe-groups-users.tmp`; do
+      if [ "$group" == "$entry" ]; then
+        safe=true
+        usergroup=true
+        break
+      fi
+    done
+    if [ "$safe" == "false" ]; then
+      sudo echo "Is $group a valid group? (y/n):"
+      read validGroup
+      if [ "$validGroup" != "n" ]; then
+        echo "$group approved as valid group."
+        for member in `echo $currentMembers | sed 's/,/\n/g'`; do
+          sudo echo "Is $member supposed to be a member of $group? (y/n):"
+          read validMember
+          if [ "$validMember" != "n" ]; then
+            if [ "$members" == "" ]; then
+              members=$member
+            else
+              members=`echo $members,$member`
+            fi
+            echo "$member approved as member of $group."
+          else
+            sudo deluser $member $group
+            sudo gpasswd -d $member $group
+            echo "$member removed from $group group"
+          fi
+        done
+        echo "$group:x:$gid:$members" >> /etc/group.tmp
+      else
+        sudo groupdel $group
+        echo "$group removed."
+      fi
+    else
+      if [ "$usergroup" == "true" ]; then
+        echo "$group:x:$gid:$group" >> /etc/group.tmp
+      else
+        echo "$group:x:$gid:$currentMembers" >> /etc/group.tmp
+      fi
+    fi
+  fi
+done
+
+sudo mv -f /etc/group.tmp /etc/group
+
+#Require password for all logins
+sudo gpasswd nopasswdlogin -M ''
+
+
+#Clear iptables firewall
+sudo iptables --flush
+
+#Configure UFW
+sudo ufw enable
+sudo ufw reset
+sudo ufw logging
+sudo sed -i -e 's/-A ufw-before-input -p icmp --icmp-type destination-unreachable -j ACCEPT/-A ufw-before-input -p icmp --icmp-type destination-unreachable -j DROP/g'  /etc/ufw/before.rules
+sudo sed -i -e 's/-A ufw-before-input -p icmp --icmp-type source-quench -j ACCEPT/-A ufw-before-input -p icmp --icmp-type source-quench -j DROP/g'  /etc/ufw/before.rules
+sudo sed -i -e 's/-A ufw-before-input -p icmp --icmp-type time-exceeded -j ACCEPT/-A ufw-before-input -p icmp --icmp-type time-exceeded -j DROP/g'  /etc/ufw/before.rules
+sudo sed -i -e 's/-A ufw-before-input -p icmp --icmp-type parameter-problem -j ACCEPT/-A ufw-before-input -p icmp --icmp-type parameter-problem -j DROP/g'  /etc/ufw/before.rules
+sudo sed -i -e 's/-A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT/-A ufw-before-input -p icmp --icmp-type echo-request -j DROP/g'  /etc/ufw/before.rules
+sudo ufw reload
+sudo ufw enable
+
+#Dissable unneeded services
+if [ "$ssh_allowed" == "y" ]; then
+  sudo apt-get install -y openssh-server
+  sudo /etc/init.d/ssh start
+  sudo service ssh start
+  sudo ufw allow 22
+  sudo apt-get install -y fail2ban
+  sudo /etc/init.d/fail2ban start
+  sudo service fail2ban start
+else
+  sudo apt-get purge -y openssh-server
+  sudo ufw deny 22
+  sudo rm -f /etc/ssh/sshd_conf
+  sudo apt-get purge -y fail2ban
+fi
+if [ "$rdp_allowed" == "y" ]; then
+  sudo ufw allow 3389
+  sudo dconf write /desktop/gnome/remote-access/enabled true
+else
+  sudo ufw deny 3389
+  sudo dconf write /desktop/gnome/remote-access/enabled false
+fi
+
+#RDP Block
+sudo dconf write /desktop/gnome/remote_access/prompt-enabled true
+sudo dconf write /desktop/gnome/remote_access/lock-screen-on-disconnect true
+sudo dconf write /desktop/gnome/remote_access/notify-on-connect true
+sudo dconf write /desktop/gnome/remote_access/require-encryption true
+sudo dconf write /desktop/gnome/remote_access/authentication-methods vnc
+sudo dconf write /desktop/gnome/remote_access/use-upnp false
+
+#SSH Block
+sudo echo "AUTHORIZED USE ONLY.  UNAUTHORIZED USERS WILL BE PROSICUTED.  IF YOU ARE NOT AUTHORIZED TO ACCESS THIS SYSTEM, LOG OFF IMMIDIATLY." | sudo tee /etc/issue
+echo "Version 2" | sudo tee /etc/ssh/sshd_conf.tmp
+echo "Port 22" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AddressFamily any" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "ListenAddress 0.0.0.0" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "ListenAddress ::" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "RekeyLimit default none" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "SyslogFacility AUTH" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "LogLevel INFO" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "LoginGraceTime 120" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "HostKey " | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "ServerKeyBits 2048" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "KeyRegenerationInterval 300" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "StrictModes yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "MaxAuthTries 6" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "MaxSessions 10" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PubkeyAuthentication no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AuthorizedPrincipalsFile none" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AuthorizedKeysCommand none" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AuthorizedKeysCommandUser nobody" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "HostbasedAuthentication no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "HostbasedAuthentication no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "IgnoreUserKnownHosts yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "IgnoreRhosts yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PermitEmptyPasswords no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "UsePAM yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AllowAgentForwarding no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AllowTcpForwarding no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "GatewayPorts no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "X11Forwarding no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PermitTTY no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PrintMotd no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PrintLastLog no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "TCPKeepAlive no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "UseLogin yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PermitUserEnvironment no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "Compression delayed" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "ClientAliveInterval 300" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "ClientAliveCountMax 3" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "UseDNS no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PidFile /var/run/sshd.pid" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "MaxStartups 10:30:100" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "PermitTunnel no" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "ChrootDirectory none" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "VersionAddendum none" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "UsePrivilegeSeparation yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "VerifyReverseMapping yes" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "Banner /etc/issue" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "AcceptEnv LANG LC_*" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "Subsystem sftp internal-sftp" | sudo tee -a /etc/ssh/sshd_conf.tmp
+echo "start on filesystem or runlevel [2345]" | sudo tee -a /etc/ssh/sshd_conf.tmp
+
+sudo cp /etc/ssh/sshd_conf /etc/ssh/sshd_conf.old
+sudo mv -f /etc/ssh/sshd_conf.tmp /etc/ssh/sshd_conf
+
+if [ "$ssh_allowed" == "y" ]; then
+  sudo service ssh restart
+fi
