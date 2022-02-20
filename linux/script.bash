@@ -25,8 +25,8 @@ sudo passwd -l root
 sudo passwd -l guest
 
 #Prevent IP Spoofing
-sudo sudo echo "order bind, hosts" | sudo tee -a /etc/host.conf
-sudo sudo echo "nospoof on" | sudo tee -a /etc/host.conf
+sudo echo "order bind, hosts" | sudo tee -a /etc/host.conf
+sudo echo "nospoof on" | sudo tee -a /etc/host.conf
 
 
 #Configure /etc/login.defs
