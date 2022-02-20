@@ -343,10 +343,10 @@ sudo chmod 400 /etc/shadow
 
 
 #/bin/rm -f /etc/cron.deny /etc/at.deny
-echo root >/etc/cron.allow
-echo root >/etc/at.allow
-/bin/chown root:root /etc/cron.allow /etc/at.allow
-/bin/chmod 400 cron.allow /etc/at.allow
+echo root > /etc/cron.allow
+echo root > /etc/at.allow
+sudo chown root:root /etc/cron.allow /etc/at.allow
+sudo chmod 400 /etc/cron.allow /etc/at.allow
 
 
 
