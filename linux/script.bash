@@ -535,7 +535,7 @@ echo "landscape" >> safe-users.tmp
 echo "gnome-initial-setup" >> safe-users.tmp
 echo "geoclue" >> safe-users.tmp
 echo "gdm" >> safe-users.tmp
-echo "cops-pk-helper" >> safe-users.tmp
+echo "cups-pk-helper" >> safe-users.tmp
 
 
 
